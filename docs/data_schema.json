@@ -1,0 +1,9 @@
+{
+  "Destination Port": "int",
+  "Flow Duration": "float",
+  "Total Fwd Packets": "int",
+  "Total Backward Packets": "int",
+  "Flow Bytes/s": "float",
+  "Flow Packets/s": "float",
+  "Label": "string"
+}
