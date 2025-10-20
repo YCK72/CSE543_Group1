@@ -1,35 +1,3 @@
-```markdown
-# 🛰️ Real-Time Network Anomaly Detection – Week 1: Infrastructure + Data Ingestion
-
-This week sets up the **foundation** of the real-time anomaly-detection pipeline using **Apache Kafka**, **Docker Compose**, and **Python**.  
-It deploys a local streaming environment, ingests the **CIC-IDS-2017** network dataset, normalizes each record, and publishes cleaned data to a downstream Kafka topic.
-
----
-
-## 🗂️ Project Structure
-
-```
-
-network_anomaly_detection/
-├── data/
-│   └── CICIDS2017_sample.csv          # 50 k-row sample of CIC-IDS-2017
-├── data_original/
-│   └── Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv
-├── kafka/
-│   └── docker-compose.yml             # Confluent Kafka 7.6.0 stack
-├── src/
-│   ├── producer.py                    # Publishes raw flows → raw.flow
-│   ├── consumer_parser.py             # Normalizes flows → norm.flow
-│   └── utils/
-│       └── schema_validator.py
-├── docs/
-│   └── data_schema.json               # Normalized data schema
-└── README.md
-
-````
-
----
-
 ## ⚙️ 1. Environment Setup
 
 ### 🐍 Create Virtual Environment
