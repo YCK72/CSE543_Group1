@@ -167,8 +167,3 @@ Expected output:
 * [Kafka Python Client Documentation](https://kafka-python.readthedocs.io/en/master/)
 
 ---
-
----
-
-Would you like me to auto-generate the accompanying **`requirements.txt`** and **`.env`** file (so this README fully matches your runnable project)?
-```
