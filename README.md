@@ -178,6 +178,8 @@ python src/app.py
 Open in browser:
 http://localhost:5000
 
+![img.png](img.png)
+
 11. References
 
 CIC IDS 2017 Dataset
