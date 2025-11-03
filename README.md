@@ -1,46 +1,38 @@
-## ⚙️ 1. Environment Setup
-
-### 🐍 Create Virtual Environment
-
-```bash
+1. Environment Setup
+Create Virtual Environment
 python -m venv .venv
 source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-````
 
-`requirements.txt`
-
-```text
+requirements.txt
 pandas
 numpy
 tqdm
 kafka-python
+scikit-learn
+joblib
+flask
+matplotlib
+shap
 pyyaml
-```
 
-### 🐳 Start Kafka with Docker Compose
-
-```bash
+Start Kafka with Docker Compose
 cd kafka
 docker-compose up -d
-```
+
 
 Check containers:
 
-```bash
 docker ps
-```
+
 
 You should see:
 
-* `zookeeper`  – Confluent Zookeeper 7.6.0
-* `kafka`      – Confluent Kafka Broker 7.6.0
+zookeeper – Confluent Zookeeper 7.6.0
 
----
+kafka – Confluent Kafka Broker 7.6.0
 
-## 🧩 2. Kafka Topic Creation
-
-```bash
+2. Kafka Topic Creation
 docker exec -it kafka kafka-topics \
   --create --topic raw.flow --bootstrap-server localhost:9092 \
   --partitions 3 --replication-factor 1
@@ -49,132 +41,149 @@ docker exec -it kafka kafka-topics \
   --create --topic norm.flow --bootstrap-server localhost:9092 \
   --partitions 3 --replication-factor 1
 
+docker exec -it kafka kafka-topics \
+  --create --topic alerts.flow --bootstrap-server localhost:9092 \
+  --partitions 3 --replication-factor 1
+
+
+List topics:
+
 docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
-```
 
----
+3. Dataset Preparation
 
-## 🧠 3. Dataset Preparation
+Download CIC-IDS-2017 from Canadian Institute for Cybersecurity
+.
 
-Download **CIC-IDS-2017** from [Canadian Institute for Cybersecurity](https://www.unb.ca/cic/datasets/ids-2017.html).
+Create a 50,000-row sample:
 
-Create a 50 000-row sample:
+python data_proc.py
 
-```python
-import pandas as pd
-df = pd.read_csv('data_original/Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv')
-df_sample = df.sample(n=50000, random_state=42)
-df_sample.to_csv('data/CICIDS2017_sample.csv', index=False)
-```
 
----
+This creates:
 
-## 🔄 4. Run Streaming Pipeline
+data_processed/CICIDS2017_processed.csv
 
-### ▶️ Start Consumer (Parser)
+4. Model Training (Week 2)
 
-```bash
-python src/consumer_parser.py
-```
+Train Isolation Forest anomaly detection model:
 
-### ▶️ Start Producer
+python src/train_model.py
 
-```bash
-python src/producer.py
-```
-
-### 🔍 Verify Normalized Data
-
-```bash
-docker exec -it kafka kafka-console-consumer \
-  --topic norm.flow --bootstrap-server localhost:9092 \
-  --from-beginning --max-messages 5
-```
 
 Expected output:
 
-```json
-{"Destination Port":80,"Flow Duration":12345.0,"Flow Bytes/s":5120.0,...}
-```
+Training Isolation Forest on 50000 records...
+Model saved at model/isolation_forest.joblib
 
----
+5. Streaming Pipeline (Week 1–2)
+Start Producer
+python src/producer.py
 
-## 🧱 5. Data Schema
+Start Consumer and Parser
+python src/utils/consumer_parser.py
 
-`docs/data_schema.json`
+Start Model Inference
+python src/utils/feature_infer.py
 
-```json
-{
-  "Destination Port": "int",
-  "Flow Duration": "float",
-  "Total Fwd Packets": "int",
-  "Total Backward Packets": "int",
-  "Flow Bytes/s": "float",
-  "Flow Packets/s": "float",
-  "Label": "string"
-}
-```
 
----
+Expected output:
 
-## 📋 6. Deliverables (Week 1)
+Isolation Forest model loaded successfully.
+Scoring events in real time...
+[100] score=-0.241 anomaly=True
+[200] score=-0.105 anomaly=False
 
-| Deliverable              | Description                                    | Status |
-| ------------------------ | ---------------------------------------------- | ------ |
-| ✅ Kafka Environment      | Dockerized Zookeeper + Kafka 7.6.0             | ✔️     |
-| ✅ Data Ingestion         | Producer sends CIC-IDS-2017 flows → `raw.flow` | ✔️     |
-| ✅ Parser & Normalization | Consumer cleans and publishes → `norm.flow`    | ✔️     |
-| ✅ Schema Documentation   | `docs/data_schema.json`                        | ✔️     |
-| ✅ Test Run Verification  | Console output from `norm.flow`                | ✔️     |
+6. Explainability (Week 3)
 
----
+Run SHAP Explainability:
 
-## 🧩 7. Architecture Overview
+python src/explain_shap.py
 
-```text
-+-------------------+       +----------------+       +-----------------+
-|  Python Producer  | --->  |   Kafka Topic  | --->  |  Python Consumer |
-|  (CICIDS sample)  |       |   raw.flow     |       |  Normalizer →    |
-|                   |       |                |       |   norm.flow      |
-+-------------------+       +----------------+       +-----------------+
-```
 
----
+Expected output:
 
-## ☁️ 8. Next Steps (Week 2 Preview)
+Loading model and sample data for SHAP analysis...
+SHAP analysis complete. Saved to visuals/shap_summary.png
 
-* Implement **feature engineering** on normalized flows.
-* Train an **anomaly detection model** (Isolation Forest / LSTM Autoencoder).
-* Stream scores to an **alerts topic**.
 
----
+This generates:
 
-## 🧰 Troubleshooting
+visuals/shap_summary.png
 
-| Issue                                | Possible Cause                        | Fix                                              |
-| ------------------------------------ | ------------------------------------- | ------------------------------------------------ |
-| `FileNotFoundError`                  | Wrong dataset path                    | Confirm file under `data_original/`              |
-| `None` values for `Destination Port` | Leading spaces in column names        | Use normalized consumer_parser.py (key trimming) |
-| `KeyboardInterrupt`                  | Manual stop of infinite consumer loop | Expected; consumer listens continuously          |
-| Broker connection error              | Kafka container not running           | Run `docker-compose up -d` again                 |
 
----
+showing the top features influencing anomaly detection.
 
-## 🧾 References
+7. Flask Dashboard (Week 3)
 
-* [CIC IDS 2017 Dataset](https://www.unb.ca/cic/datasets/ids-2017.html)
-* [Confluent Kafka Docker Images](https://hub.docker.com/r/confluentinc/cp-kafka)
-* [Kafka Python Client Documentation](https://kafka-python.readthedocs.io/en/master/)
+Launch the real-time dashboard to visualize alerts.
 
----
+Start Flask App:
 
-**Author:** *Praneeth Krishna Palle*
-**Environment:** PyCharm + venv + Docker Compose + Confluent Kafka 7.6.0
-**Date:** Week 1 Implementation — Infrastructure & Data Ingestion
+python src/app.py
 
-```
 
----
+Dashboard available at:
 
-Would you like me to auto-generate the accompanying **`requirements.txt`** and **`.env`** file (so this README fully matches your runnable project)?
-```
+http://localhost:5000
+
+Displays:
+
+Live streaming alerts (source/destination IP, port, score, anomaly status)
+
+Auto-refresh every 3 seconds
+
+Integrated SHAP summary visualization (optional)
+
+Example UI:
+
++------------+---------------+---------------+--------+--------+-----------+
+| Timestamp  | Source IP     | Destination IP| Port   | Score  | Anomaly   |
++------------+---------------+---------------+--------+--------+-----------+
+| ...        | 10.0.0.1      | 10.0.0.2      | 443    | -0.234 | True      |
+
+8. Final Architecture Overview
+graph TD
+A[Producer.py<br/>Mock Flow Logs] -->|raw.flow| B[Consumer_Parser.py<br/>Normalization]
+B -->|norm.flow| C[Feature_Infer.py<br/>Isolation Forest Scoring]
+C -->|alerts.flow| D[Flask Dashboard<br/>app.py]
+C -->|SHAP| E[Explainability<br/>visuals/shap_summary.png]
+
+9. Deliverables Summary
+Week	Component	Description	Status
+1	Kafka Infrastructure	Dockerized Zookeeper and Kafka	✔️
+1	Data Ingestion	Producer → raw.flow	✔️
+1	Parser	Consumer → norm.flow	✔️
+2	Model Training	Isolation Forest	✔️
+2	Real-Time Scoring	norm.flow → alerts.flow	✔️
+3	Explainability	SHAP integration	✔️
+3	Visualization	Flask web dashboard	✔️
+10. How to Run the Complete Application
+# 1. Start Kafka
+cd kafka && docker-compose up -d
+cd ..
+
+# 2. Prepare dataset and train model
+python data_proc.py
+python src/train_model.py
+python src/explain_shap.py
+
+# 3. Run full pipeline (each in a separate terminal)
+python src/producer.py
+python src/utils/consumer_parser.py
+python src/utils/feature_infer.py
+python src/app.py
+
+
+Open in browser:
+http://localhost:5000
+
+11. References
+
+CIC IDS 2017 Dataset
+
+Kafka Python Client Documentation
+
+SHAP Library Documentation
+
+Flask Official Documentation

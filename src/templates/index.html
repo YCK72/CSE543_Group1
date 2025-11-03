@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IDS Alerts Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111; color:#eee; }
+    h1 { color:#00ff99; }
+    table { border-collapse: collapse; width:100%; margin-top:1em; }
+    th, td { border:1px solid #444; padding:8px; text-align:left; }
+    th { background:#222; }
+    .anomaly-true { color:#ff5555; font-weight:bold; }
+  </style>
+  <script>
+    async function fetchAlerts(){
+      const res = await fetch('/alerts');
+      const data = await res.json();
+      const tbody = document.querySelector('tbody');
+      tbody.innerHTML = '';
+      data.forEach(a=>{
+        const row = `<tr>
+          <td>${a.timestamp}</td>
+          <td>${a.context["Source IP"]}</td>
+          <td>${a.context["Destination IP"]}</td>
+          <td>${a.context["Destination Port"]}</td>
+          <td>${a.score.toFixed(3)}</td>
+          <td class="${a.is_anomaly?'anomaly-true':''}">${a.is_anomaly}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+    setInterval(fetchAlerts, 3000);
+    window.onload = fetchAlerts;
+  </script>
+</head>
+<body>
+  <h1>Adaptive IDS – Live Alerts</h1>
+  <p>Refreshing every 3 seconds (see <code>visuals/shap_summary.png</code> for feature importance)</p>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Src IP</th><th>Dst IP</th><th>Port</th><th>Score</th><th>Anomaly</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</body>
+</html>
