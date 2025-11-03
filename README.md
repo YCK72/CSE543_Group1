@@ -168,12 +168,6 @@ Expected output:
 
 ---
 
-**Author:** *Praneeth Krishna Palle*
-**Environment:** PyCharm + venv + Docker Compose + Confluent Kafka 7.6.0
-**Date:** Week 1 Implementation — Infrastructure & Data Ingestion
-
-```
-
 ---
 
 Would you like me to auto-generate the accompanying **`requirements.txt`** and **`.env`** file (so this README fully matches your runnable project)?
