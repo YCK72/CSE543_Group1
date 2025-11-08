@@ -318,7 +318,7 @@ python src/app.py
 **Environment:** Python 3.13 + Docker Compose + Confluent Kafka 7.6.0
 **IDE:** PyCharm / VS Code
 **Date:** Week 3 Implementation — Explainability and Visualization Layer
-**Author:** Praneeth Krishna Palle (Group Project)
+
 
 ---
 
